@@ -8,6 +8,7 @@
         "strict": true,
         "moduleResolution": "Node",
         "esModuleInterop": true,
+        "allowImportingTsExtensions": true,
         "skipLibCheck": true
     },
     "include": ["./src/**/*.ts"],

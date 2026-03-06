@@ -4,7 +4,8 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "tsx ./src/index.ts"
+    "start": "tsx ./src/index.ts",
+    "type-check": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
