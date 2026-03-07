@@ -1,35 +1,30 @@
 import os from "os";
 import path from "path";
-import fs from "fs/promises";
+import fs from "fs";
 
 type Config = {
     dbUrl: string;
     currentUserName: string;
 }
 
-export async function setUser(username: string) {
-    let currentConfig:Config = await readConfig();
+export function setUser(username: string) {
+    let currentConfig:Config = readConfig();
 
     let configPath = getConfigFilePath();
-    let configFile = await fs.open(configPath, "w");
-    let configString = await JSON.stringify({
+    let configFile = fs.openSync(configPath, "w");
+    let configString = JSON.stringify({
         db_url : currentConfig.dbUrl,
         current_user_name : username,
     });
-    await configFile.writeFile(configString);
-    await configFile.close();
+    fs.writeFileSync(configFile, configString);
+    fs.closeSync(configFile);
 }
 
-export async function readConfig(): Promise<Config> {
+export function readConfig(): Config {
     let configPath = getConfigFilePath();
-    let configFile = await fs.open(configPath);
-    let configFileContents = await configFile.read();
-    await configFile.close();
-    let configJson = await configFileContents.buffer.toString(
-        'utf8', 0, configFileContents.bytesRead
-    );
+    let configFileContents = fs.readFileSync(configPath, {encoding: "utf8"});
     let parsedJson:any;
-    parsedJson = await JSON.parse(configJson);
+    parsedJson = JSON.parse(configFileContents);
     return validateConfig(parsedJson);
 }
 
