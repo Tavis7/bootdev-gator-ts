@@ -69,3 +69,44 @@ export async function handlerUsers(cmdName: string, ...args: Array<string>) {
         console.log(` * ${result.name}${marker}`);
     }
 }
+
+import { fetchFeed } from "./feed.ts"
+export async function handlerAgg(cmdName: string, ...args: Array<string>) {
+    let feed = await fetchFeed("https://www.wagslane.dev/index.xml");
+    console.log(`${feed.channel.title}`);
+    console.log(`${feed.channel.link}`);
+    console.log(`${feed.channel.description}`);
+    for (let item of feed.channel.item) {
+        console.log(`   ${item.title}`);
+        console.log(`   ${item.link}`);
+        console.log(`   ${item.description}`);
+        console.log(`   ${item.pubDate}`);
+    }
+}
+
+import { createFeed, getFeeds } from "./lib/db/queries/feeds.ts"
+import { type Feed, type User } from "./lib/db/schema.ts"
+
+export async function handlerAddFeed(cmdName: string, ...args: Array<string>) {
+    if (args.length !== 2) {
+        throw new Error("Expects exactly two arguments");
+    }
+    let name: string = args[0];
+    let url: string = args[1];
+    let config = readConfig();
+    let user = await getUser(config.currentUserName);
+    let feed = await createFeed(name, url, user.id);
+    printFeed(feed, user);
+}
+
+function printFeed(feed: Feed, user: User) {
+    console.log(feed);
+    console.log(user);
+}
+
+export async function handlerFeeds(cmdName: string) {
+    let feeds = await getFeeds();
+    for (let feed of feeds) {
+        console.log(`[${feed.feeds.name}] (${feed.users.name})\n    ${feed.feeds.url}`);
+    }
+}
