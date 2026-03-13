@@ -15,6 +15,13 @@
       "when": 1773153383481,
       "tag": "0001_sudden_la_nuit",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773370986760,
+      "tag": "0002_chilly_xorn",
+      "breakpoints": true
     }
   ]
 }

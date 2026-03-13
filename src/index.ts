@@ -8,6 +8,8 @@ import {
     handlerAgg,
     handlerAddFeed,
     handlerFeeds,
+    handlerFollow,
+    handlerFollowing,
 } from "./commands.ts";
 
 async function main() {
@@ -18,6 +20,8 @@ async function main() {
     registerCommand(registry, "agg", handlerAgg);
     registerCommand(registry, "addfeed", handlerAddFeed);
     registerCommand(registry, "feeds", handlerFeeds);
+    registerCommand(registry, "follow", handlerFollow);
+    registerCommand(registry, "following", handlerFollowing);
     registerCommand(registry, "reset", handlerReset);
     let args = process.argv.slice(2);
     if (args.length <= 0) {
