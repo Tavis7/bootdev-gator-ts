@@ -98,6 +98,7 @@ export async function handlerAddFeed(cmdName: string, ...args: Array<string>) {
     let user = await getUser(config.currentUserName);
     let feed = await createFeed(name, url, user.id);
     let followResult = await createFeedFollow(user.id, feed.id);
+    console.log(`${followResult.users.name} is now following ${followResult.feeds.name}`);
     printFeed(feed, user);
 }
 
@@ -130,7 +131,8 @@ export async function handlerFollowing(cmdName: string, ...args: Array<string>) 
 }
 
 function printFeed(feed: Feed, user: User) {
-    console.log(`${user.name} created feed ${feed.name}`);
+    console.log(feed.name);
+    console.log(user.name);
 }
 
 export async function handlerFeeds(cmdName: string) {
