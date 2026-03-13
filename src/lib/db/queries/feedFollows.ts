@@ -15,12 +15,12 @@ export async function createFeedFollow(userId: string, feedId: string) {
     return result;
 }
 
-export async function getFeedFollowsForUser(userName: string) {
+export async function getFeedFollowsForUser(userId: string) {
     const result = await db
         .select()
         .from(feedFollows)
         .innerJoin(feeds, eq(feeds.id, feedFollows.feedId))
         .innerJoin(users, eq(users.id, feedFollows.userId))
-        .where(eq(users.name, userName));
+        .where(eq(users.id, userId));
     return result;
 }

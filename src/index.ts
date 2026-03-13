@@ -10,6 +10,7 @@ import {
     handlerFeeds,
     handlerFollow,
     handlerFollowing,
+    middlewareLoggedIn,
 } from "./commands.ts";
 
 async function main() {
@@ -18,10 +19,10 @@ async function main() {
     registerCommand(registry, "register", handlerRegister);
     registerCommand(registry, "users", handlerUsers);
     registerCommand(registry, "agg", handlerAgg);
-    registerCommand(registry, "addfeed", handlerAddFeed);
+    registerCommand(registry, "addfeed", middlewareLoggedIn(handlerAddFeed));
     registerCommand(registry, "feeds", handlerFeeds);
-    registerCommand(registry, "follow", handlerFollow);
-    registerCommand(registry, "following", handlerFollowing);
+    registerCommand(registry, "follow", middlewareLoggedIn(handlerFollow));
+    registerCommand(registry, "following", middlewareLoggedIn(handlerFollowing));
     registerCommand(registry, "reset", handlerReset);
     let args = process.argv.slice(2);
     if (args.length <= 0) {

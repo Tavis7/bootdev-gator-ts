@@ -6,6 +6,15 @@ import { PostgresError } from "postgres";
 
 type CommandHandler = (cmdName: string, ...args: Array<string>) => Promise<void>;
 export type CommandRegistry = Record<string, CommandHandler>;
+type UserCommandHandler = (cmdName: string, user: User, ...args: Array<string>) => Promise<void>;
+
+export function middlewareLoggedIn(handler: UserCommandHandler): CommandHandler {
+    return async function (cmdName: string, ...args: Array<string>) : Promise<void> {
+        let config = readConfig();
+        let user = await getUser(config.currentUserName);
+        return handler(cmdName, user, ...args);
+    }
+}
 
 export function registerCommand(registry: CommandRegistry, cmdName: string, handler: CommandHandler) {
     registry[cmdName] = handler;
@@ -88,43 +97,39 @@ import { createFeed, getFeeds, getFeedByUrl } from "./lib/db/queries/feeds.ts"
 import { type Feed, type User } from "./lib/db/schema.ts"
 import { createFeedFollow, getFeedFollowsForUser } from "./lib/db/queries/feedFollows.ts"
 
-export async function handlerAddFeed(cmdName: string, ...args: Array<string>) {
+export async function handlerAddFeed(cmdName: string, user: User, ...args: Array<string>) {
     if (args.length !== 2) {
         throw new Error("Expects exactly two arguments");
     }
     let name: string = args[0];
     let url: string = args[1];
-    let config = readConfig();
-    let user = await getUser(config.currentUserName);
     let feed = await createFeed(name, url, user.id);
     let followResult = await createFeedFollow(user.id, feed.id);
     console.log(`${followResult.users.name} is now following ${followResult.feeds.name}`);
     printFeed(feed, user);
 }
 
-export async function handlerFollow(cmdName: string, ...args: Array<string>) {
+export async function handlerFollow(cmdName: string, user: User, ...args: Array<string>) {
     if (args.length !== 1) {
         throw new Error("Expects exactly one argument");
     }
     let url = args[0];
-    let config = readConfig();
 
     let feedResult = await getFeedByUrl(url)
     let feedId = feedResult.id;
 
-    let userResult = await getUser(config.currentUserName);
-    let userId = userResult.id;
+    let userId = user.id;
 
     let followResult = await createFeedFollow(userId, feedId);
     console.log(`${followResult.users.name} is now following ${followResult.feeds.name}`);
 }
 
-export async function handlerFollowing(cmdName: string, ...args: Array<string>) {
+export async function handlerFollowing(cmdName: string, user: User, ...args: Array<string>) {
     if (args.length !== 0) {
         throw new Error("Expects exactly zero arguments");
     }
     let config = readConfig();
-    let follows = await getFeedFollowsForUser(config.currentUserName);
+    let follows = await getFeedFollowsForUser(user.id);
     for (let follow of follows) {
         console.log(`${follow.feeds.name}, ${follow.feeds.url}`);
     }
