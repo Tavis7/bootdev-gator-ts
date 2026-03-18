@@ -36,7 +36,7 @@ export async function handlerLogin(cmdName: string, ...args: Array<string>) {
 
     let username = args[0];
     const queryResult = await getUser(username);
-    if (queryResult.name !== username) {
+    if (queryResult?.name !== username) {
         throw new Error(`User '${username}' does not exist`);
     }
     await setUser(username);
@@ -80,7 +80,56 @@ export async function handlerUsers(cmdName: string, ...args: Array<string>) {
 }
 
 import { fetchFeed } from "./feed.ts"
+
 export async function handlerAgg(cmdName: string, ...args: Array<string>) {
+    if (args.length !== 1) {
+        throw new Error("Expects exactly one argument");
+    }
+    let durationStr = args[0];
+    let parsedInterval = durationStr.match(/^(\d+)(ms|s|m|h)$/);
+    type IntervalSuffix = "ms"|"s"|"m"|"h";
+    let intervalValues: Record<IntervalSuffix, number> = {
+        ms: 1,
+        s: 1000,
+        m: 1000 * 60,
+        h: 1000 * 60 * 60,
+    };
+
+    function isIntervalSuffix(suffix:string): suffix is IntervalSuffix {
+        return (suffix in intervalValues)
+    }
+    if (parsedInterval === null) {
+        throw new Error("Interval must be <digit>[ms|s|m|h]");
+    }
+
+    let units = parsedInterval[2];
+
+    if (!isIntervalSuffix(units)) {
+        throw new Error("Interval must be <digit>[ms|s|m|h]");
+    }
+
+    let intervalMiliseconds:number = Number(parsedInterval[1]) * intervalValues[units];
+
+    console.log(`Collecting feeds every ${parsedInterval[0]}`);
+    console.log(intervalMiliseconds);
+
+    function handleError(error:string) {
+        console.log(error);
+    }
+    scrapeFeeds().catch(handleError);
+
+    const interval = setInterval(() => {
+        scrapeFeeds().catch(handleError);
+    }, intervalMiliseconds);
+
+    await new Promise<void>((resolve) => {
+        process.on("SIGINT", () => {
+            console.log("Shutting down feed aggregator...");
+            clearInterval(interval);
+            resolve();
+        });
+    });
+    /*
     let feed = await fetchFeed("https://www.wagslane.dev/index.xml");
     console.log(`${feed.channel.title}`);
     console.log(`${feed.channel.link}`);
@@ -91,11 +140,12 @@ export async function handlerAgg(cmdName: string, ...args: Array<string>) {
         console.log(`   ${item.description}`);
         console.log(`   ${item.pubDate}`);
     }
+    */
 }
 
 import { createFeed, getFeeds, getFeedByUrl } from "./lib/db/queries/feeds.ts"
 import { type Feed, type User } from "./lib/db/schema.ts"
-import { createFeedFollow, getFeedFollowsForUser } from "./lib/db/queries/feedFollows.ts"
+import { createFeedFollow, getFeedFollowsForUser, deleteFeedFollow } from "./lib/db/queries/feedFollows.ts"
 
 export async function handlerAddFeed(cmdName: string, user: User, ...args: Array<string>) {
     if (args.length !== 2) {
@@ -135,6 +185,23 @@ export async function handlerFollowing(cmdName: string, user: User, ...args: Arr
     }
 }
 
+export async function handlerUnfollow(cmdName: string, user: User, ...args: Array<string>) {
+    if (args.length !== 1) {
+        throw new Error("Expects exactly one argument");
+    }
+    let url = args[0];
+
+    let feedResult = await getFeedByUrl(url)
+    let feedId = feedResult.id;
+
+    let userId = user.id;
+
+    let unfollowResult = await deleteFeedFollow(userId, feedId);
+    if (unfollowResult != undefined) {
+        console.log(`${user.name} has unfollowed ${feedResult.name}`);
+    }
+}
+
 function printFeed(feed: Feed, user: User) {
     console.log(feed.name);
     console.log(user.name);
@@ -144,5 +211,17 @@ export async function handlerFeeds(cmdName: string) {
     let feeds = await getFeeds();
     for (let feed of feeds) {
         console.log(`[${feed.feeds.name}] (${feed.users.name})\n    ${feed.feeds.url}`);
+    }
+}
+
+import {getNextFeedToFetch, markFeedFetched } from './lib/db/queries/feeds.ts'
+
+export async function scrapeFeeds() {
+    let [feed] = await getNextFeedToFetch();
+    markFeedFetched(feed.id);
+    console.log(`Scraping feed: ${feed.url}`);
+    let feedData = await fetchFeed(feed.url);
+    for (let data of feedData.channel.item) {
+        console.log(`${data.title}`);
     }
 }
