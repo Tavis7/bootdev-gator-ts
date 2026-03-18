@@ -21,7 +21,7 @@ export function registerCommand(registry: CommandRegistry, cmdName: string, hand
 }
 
 export async function runCommand(registry: CommandRegistry, cmdName: string, ...args: Array<string>) {
-    const handler = registry[cmdName];
+    const handler = registry[cmdName.toLowerCase()];
     if (handler !== undefined) {
         await handler(cmdName, ...args);
     } else {
@@ -210,11 +210,35 @@ function printFeed(feed: Feed, user: User) {
 export async function handlerFeeds(cmdName: string) {
     let feeds = await getFeeds();
     for (let feed of feeds) {
-        console.log(`[${feed.feeds.name}] (${feed.users.name})\n    ${feed.feeds.url}`);
+        let lastFetched = feed.feeds.lastFetchedAt;
+        let date:null|string = null;
+        if (lastFetched) {
+            date = `${lastFetched.getFullYear()}-${lastFetched.getMonth() + 1}-${lastFetched.getDate()} ${lastFetched.getHours()}:${lastFetched.getMinutes()}:${lastFetched.getSeconds()}`;
+        }
+        console.log(`[${feed.feeds.name}] (${feed.users.name})\n    ${feed.feeds.url}, last fetched: ${date}`);
     }
 }
 
-import {getNextFeedToFetch, markFeedFetched } from './lib/db/queries/feeds.ts'
+import { getNextFeedToFetch, markFeedFetched } from './lib/db/queries/feeds.ts'
+import { createPost, getPostsForUser } from './lib/db/queries/posts.ts'
+
+export async function handlerBrowse(cmdName: string, user: User, ...args: Array<string>) {
+    if (args.length > 1) {
+        console.log("Expected at most one argument");
+    }
+
+    let count:number = 2;
+    if (args.length == 1) {
+        count = Number(args[0]);
+    }
+
+    let posts = await getPostsForUser(user.id, count);
+    for (let post of posts) {
+        console.log(`\n${post.posts.title}`);
+        console.log(`    ${post.feeds.name}: ${post.posts.url}`);
+    }
+}
+
 
 export async function scrapeFeeds() {
     let [feed] = await getNextFeedToFetch();
@@ -223,5 +247,7 @@ export async function scrapeFeeds() {
     let feedData = await fetchFeed(feed.url);
     for (let data of feedData.channel.item) {
         console.log(`${data.title}`);
+        let publishDate = new Date(data.pubDate);
+        createPost(data.title, data.link, data.description, publishDate, feed.id);
     }
 }
