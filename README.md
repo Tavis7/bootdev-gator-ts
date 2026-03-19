@@ -1,34 +1,36 @@
 # Steps to configure and use this program
 
-## Install NVM
+## Setup
+
+### Install NVM
 
 <https://github.com/nvm-sh/nvm?tab=readme-ov-file>
 
-## Activate node
+### Activate node
 
 Whenever you open a new terminal you should run this command to switch to the correct version of node:
 ```sh
 nvm use
 ```
 
-## Install project dependencies
+### Install project dependencies
 
 ```sh
 npm install
 ```
 
-## Install postgres
+### Install postgres
 
-### On Ubuntu
+#### On Ubuntu
 
 ```sh
 sudo apt update
 sudo apt install postgresql postgresql-contrib
 ```
 
-## Connect to postgres
+### Connect to postgres
 
-### First time connecting
+#### First time connecting
 
 Change the postgres system user's password to something you'll remember:
 ```sh
@@ -45,14 +47,14 @@ That should give you a prompt that looks like this
 postgres=#
 ```
 
-### On Ubuntu
+#### On Ubuntu
 
 Set the database password in the postgres shell
 ```sql
 ALTER USER postgres PASSWORD 'postgres';
 ```
 
-### Connecting from a different user account
+#### Connecting from a different user account
 
 ```sh
 psql "postgres://postgres:postgres@localhost:5432/"
@@ -61,7 +63,7 @@ psql "postgres://postgres:postgres@localhost:5432/"
 
 If you used a different user, database password, domain, or port, the URL format is `postgres://username:password@domain:port/`
 
-## Use psql to create the database
+### Use psql to create the database
 
 From the postgres shell run
 
@@ -74,7 +76,7 @@ You can then connect to the gator database with `\c gator`
 You can also list databases with `\l` and tables in the current database with `\d`.
 
 
-## Create ~/.gatorconfig.json
+### Create ~/.gatorconfig.json
 
 Put this in ~/.gatorconfig.json, replacing `<url>` with the url required to connect to the postgres database from the "Connect to postgres" step above.
 
@@ -87,7 +89,7 @@ If your database username and password are both "postgres", your database is "ga
 {"db_url":"postgres://postgres:postgres@localhost:5432/gator?sslmode=disable"}
 ```
 
-## Initialize the database
+### Initialize the database
 
 ```sh
 npx drizzle-kit migrate
@@ -99,16 +101,16 @@ npx drizzle-kit migrate
 ./gator <command> <args>
 ```
 
-### Register your first user
+#### Register your first user
 
 ```sh
 ./gator register <username>
 ```
 
-### Running the aggregator
+#### Running the aggregator
 
 The `agg` command is meant to be run persistently in the background. Every interval it will update the least recently updated feed. You should avoid using an excessively short interval.
 
-### Everything else
+#### Everything else
 
 Use `./gator help` to get a list of commands.
