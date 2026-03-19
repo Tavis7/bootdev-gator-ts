@@ -34,9 +34,14 @@ export function registerCommand(registry: CommandRegistry,
 }
 
 export async function runCommand(registry: CommandRegistry, cmdName: string, ...args: Array<string>) {
-    const handler = registry[cmdName.toLowerCase()].handler;
+    let registered = registry[cmdName.toLowerCase()];
+    const handler = registered.handler;
     if (handler !== undefined) {
         await handler(cmdName, ...args);
+        if (Object.keys(registered.arguments).length !== args.length) {
+            console.log("\nWarning: wrong number of arguments detected but the command handler didn't complain");
+            console.log("This is either a bug in the documentation or the command handler");
+        }
     } else {
         throw new Error(`Unknown command: ${cmdName}`);
     }
@@ -220,7 +225,10 @@ function printFeed(feed: Feed, user: User) {
     console.log(user.name);
 }
 
-export async function handlerFeeds(cmdName: string) {
+export async function handlerFeeds(cmdName: string, ...args: Array<string>) {
+    if (args.length !== 0) {
+        throw new Error("Expects exactly zero arguments");
+    }
     let feeds = await getFeeds();
     for (let feed of feeds) {
         let lastFetched = feed.feeds.lastFetchedAt;
@@ -274,6 +282,9 @@ function helpFormatArg(arg:string, defaultValue: string|undefined) {
 
 export function middlewareHelp(registry:CommandRegistry): CommandHandler {
     return async function(cmdName: string, ...args: Array<string>) {
+        if (args.length !== 0) {
+            throw new Error("Expects exactly zero arguments");
+        }
         let longestCommandNameLength = 0;
         for (let [key, command] of Object.entries(registry)) {
             longestCommandNameLength =
@@ -286,7 +297,7 @@ export function middlewareHelp(registry:CommandRegistry): CommandHandler {
             let commandPadding = longestCommandNameLength - 
                 (key.length + command.argsTotalLength);
             let args = "";
-            let sep = ":    ";
+            let sep = "    ";
             let substrings = command.docstring.split("\n");
             for (let [arg, defaultValue] of Object.entries(command.arguments)) {
                 args = `${args}${helpFormatArg(arg, defaultValue)}`;
