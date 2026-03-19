@@ -71,6 +71,8 @@ CREATE DATABASE gator;
 
 You can then connect to the gator database with `\c gator`
 
+You can also list databases with `\l` and tables in the current database with `\d`.
+
 
 ## Create ~/.gatorconfig.json
 
@@ -91,16 +93,22 @@ If your database username and password are both "postgres", your database is "ga
 npx drizzle-kit migrate
 ```
 
-## Run the program
+## Running the program
 
 ```sh
 ./gator <command> <args>
 ```
 
-or
+### Register your first user
 
 ```sh
-npm run start <command> <args>
+./gator register <username>
 ```
+
+### Running the aggregator
+
+The `agg` command is meant to be run persistently in the background. Every interval it will update the least recently updated feed. You should avoid using an excessively short interval.
+
+### Everything else
 
 Use `./gator help` to get a list of commands.

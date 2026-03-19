@@ -28,16 +28,18 @@ async function main() {
     registerCommand(registry, "users", handlerUsers,
         "List users");
     registerCommand(registry, "agg", handlerAgg,
-        "Run aggregator. Interval is an integer with a\n"+
-            "'ms', 's', 'm', or 'h' suffix for\n"+
-            "milliseconds, seconds, minutes, or hours.\n"+
-            "Example: Ten minutes would be 10m.",
+        "Run the aggregator in the background to refresh\n"+
+            "all the added RSS feeds.\n\n"+
+            "The interval is an integer with a\n"+
+            "'ms', 's', 'm', or 'h' suffix for milliseconds,\n"+
+            "seconds, minutes, or hours.\n\n"+
+            "For example, ten minutes would be written 10m.",
         {"interval": undefined});
     registerCommand(registry, "addfeed", middlewareLoggedIn(handlerAddFeed),
         "Add and follow a feed",
         {
             "feed name": undefined,
-            "url": undefined
+            "url": undefined,
         });
     registerCommand(registry, "feeds", handlerFeeds,
         "List feeds");
@@ -51,8 +53,9 @@ async function main() {
         "List recent articles from feeds you are following", {"count": "2"});
     registerCommand(registry, "help", middlewareHelp(registry),
         "Print this help menu");
-    registerCommand(registry, "reset", handlerReset,
-        "Reset the database");
+    registerCommand(registry, "--reset-database", handlerReset,
+        "Reset the database. May need to be prefixed with an\n"+
+            "extra '--', like './gator -- --reset-database'.");
     let args = process.argv.slice(2);
     if (args.length <= 0) {
         console.log("Error: expected a command");
