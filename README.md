@@ -59,3 +59,5 @@ or
 ```sh
 npm run start <command> <args>
 ```
+
+Use `./gator help` to get a list of commands.

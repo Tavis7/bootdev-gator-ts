@@ -5,7 +5,12 @@ import { DrizzleQueryError } from "drizzle-orm";
 import { PostgresError } from "postgres";
 
 type CommandHandler = (cmdName: string, ...args: Array<string>) => Promise<void>;
-export type CommandRegistry = Record<string, CommandHandler>;
+export type CommandRegistry = Record<string, {
+    handler:CommandHandler,
+    docstring:string,
+    arguments: Record<string, string|undefined>,
+    argsTotalLength: number,
+}>;
 type UserCommandHandler = (cmdName: string, user: User, ...args: Array<string>) => Promise<void>;
 
 export function middlewareLoggedIn(handler: UserCommandHandler): CommandHandler {
@@ -16,12 +21,20 @@ export function middlewareLoggedIn(handler: UserCommandHandler): CommandHandler 
     }
 }
 
-export function registerCommand(registry: CommandRegistry, cmdName: string, handler: CommandHandler) {
-    registry[cmdName] = handler;
+export function registerCommand(registry: CommandRegistry,
+    cmdName: string, handler: CommandHandler,
+    docstring: string, args: Record<string, string|undefined> = {}) {
+    let argsTotalLength = 0
+    let copiedArgs:Record<string, string|undefined> = {};
+    for (let [key, value] of Object.entries(args)) {
+        argsTotalLength += helpFormatArg(key, value).length;
+        copiedArgs[key] = value;
+    }
+    registry[cmdName] = {handler, docstring, arguments: copiedArgs, argsTotalLength: argsTotalLength};
 }
 
 export async function runCommand(registry: CommandRegistry, cmdName: string, ...args: Array<string>) {
-    const handler = registry[cmdName.toLowerCase()];
+    const handler = registry[cmdName.toLowerCase()].handler;
     if (handler !== undefined) {
         await handler(cmdName, ...args);
     } else {
@@ -249,5 +262,39 @@ export async function scrapeFeeds() {
         console.log(`${data.title}`);
         let publishDate = new Date(data.pubDate);
         createPost(data.title, data.link, data.description, publishDate, feed.id);
+    }
+}
+
+function helpFormatArg(arg:string, defaultValue: string|undefined) {
+    if (defaultValue === undefined) {
+        return ` <${arg}>`;
+    }
+    return ` [${arg} (default=${defaultValue})]`;
+}
+
+export function middlewareHelp(registry:CommandRegistry): CommandHandler {
+    return async function(cmdName: string, ...args: Array<string>) {
+        let longestCommandNameLength = 0;
+        for (let [key, command] of Object.entries(registry)) {
+            longestCommandNameLength =
+                Math.max(longestCommandNameLength,
+                    key.length + command.argsTotalLength);
+        }
+        console.log("==== Help ====");
+        for (let [key, command] of Object.entries(registry)) {
+            console.log();
+            let commandPadding = longestCommandNameLength - 
+                (key.length + command.argsTotalLength);
+            let args = "";
+            let sep = ":    ";
+            let substrings = command.docstring.split("\n");
+            for (let [arg, defaultValue] of Object.entries(command.arguments)) {
+                args = `${args}${helpFormatArg(arg, defaultValue)}`;
+            }
+            console.log(`${key}${args}${sep}${" ".repeat(commandPadding)}${substrings[0]}`);
+            for (let substring of substrings.slice(1)) {
+                console.log(`${" ".repeat(longestCommandNameLength + sep.length)}${substring}`);
+            }
+        }
     }
 }

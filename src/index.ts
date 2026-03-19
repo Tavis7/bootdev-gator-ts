@@ -13,22 +13,46 @@ import {
     handlerBrowse,
 
     handlerReset,
+    middlewareHelp,
     middlewareLoggedIn,
 } from "./commands.ts";
 
 async function main() {
     let registry: CommandRegistry = {};
-    registerCommand(registry, "login", handlerLogin);
-    registerCommand(registry, "register", handlerRegister);
-    registerCommand(registry, "users", handlerUsers);
-    registerCommand(registry, "agg", handlerAgg);
-    registerCommand(registry, "addfeed", middlewareLoggedIn(handlerAddFeed));
-    registerCommand(registry, "feeds", handlerFeeds);
-    registerCommand(registry, "follow", middlewareLoggedIn(handlerFollow));
-    registerCommand(registry, "following", middlewareLoggedIn(handlerFollowing));
-    registerCommand(registry, "unfollow", middlewareLoggedIn(handlerUnfollow));
-    registerCommand(registry, "browse", middlewareLoggedIn(handlerBrowse));
-    registerCommand(registry, "reset", handlerReset);
+    registerCommand(registry, "login", handlerLogin,
+        "Log in",
+        {"username": undefined});
+    registerCommand(registry, "register", handlerRegister,
+        "Register user",
+        {"username": undefined});
+    registerCommand(registry, "users", handlerUsers,
+        "List users");
+    registerCommand(registry, "agg", handlerAgg,
+        "Run aggregator. Interval is an integer with a\n"+
+            "'ms', 's', 'm', or 'h' suffix for\n"+
+            "milliseconds, seconds, minutes, or hours.\n"+
+            "Example: Ten minutes would be 10m.",
+        {"interval": undefined});
+    registerCommand(registry, "addfeed", middlewareLoggedIn(handlerAddFeed),
+        "Add and follow a feed",
+        {
+            "feed name": undefined,
+            "url": undefined
+        });
+    registerCommand(registry, "feeds", handlerFeeds,
+        "List feeds");
+    registerCommand(registry, "follow", middlewareLoggedIn(handlerFollow),
+        "Follow a feed", {"url": undefined});
+    registerCommand(registry, "following", middlewareLoggedIn(handlerFollowing),
+        "List feeds you are following");
+    registerCommand(registry, "unfollow", middlewareLoggedIn(handlerUnfollow),
+        "Unfollow a feed", {"url": undefined});
+    registerCommand(registry, "browse", middlewareLoggedIn(handlerBrowse),
+        "List recent articles from feeds you are following", {"count": "2"});
+    registerCommand(registry, "help", middlewareHelp(registry),
+        "Print this help menu");
+    registerCommand(registry, "reset", handlerReset,
+        "Reset the database");
     let args = process.argv.slice(2);
     if (args.length <= 0) {
         console.log("Error: expected a command");
