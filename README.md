@@ -17,7 +17,7 @@ nvm use
 npm install
 ```
 
-## create ~/.gatorconfig.json
+## Create ~/.gatorconfig.json
 
 Put this in ~/.gatorconfig.json, replacing `<url>` with the url required to connect to the postgres database from the "Connect to postgres" step above.
 
