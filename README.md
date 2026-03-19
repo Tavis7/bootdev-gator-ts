@@ -1,23 +1,23 @@
 # Steps to configure and use this program
 
-#### Install NVM
+## Install NVM
 
 <https://github.com/nvm-sh/nvm?tab=readme-ov-file>
 
-#### Activate node
+## Activate node
 
 Whenever you open a new terminal you should run this command to switch to the correct version of node:
 ```sh
 nvm use
 ```
 
-#### Install project dependencies
+## Install project dependencies
 
 ```sh
 npm install
 ```
 
-#### create ~/.gatorconfig.json
+## create ~/.gatorconfig.json
 
 Put this in ~/.gatorconfig.json, replacing `<url>` with the url required to connect to the postgres database from the "Connect to postgres" step above.
 
@@ -31,15 +31,15 @@ If your database username and password are both "postgres" and your port is 5432
 ```
 
 
-#### Install postgres
+## Install postgres
 
-##### On Ubuntu:
+### On Ubuntu:
 ```sh
 sudo apt update
 sudo apt install postgresql postgresql-contrib
 ```
 
-#### Connect to postgres
+## Connect to postgres
 
 ```sh
 psql "postgres://postgres:postgres@localhost:5432/"
@@ -48,17 +48,17 @@ psql "postgres://postgres:postgres@localhost:5432/"
 
 If you need to modify the URL the format is `postgres://username:password@domain:port/`
 
-#### Use psql to create gator database
+## Use psql to create gator database
 ```sql
 CREATE DATABASE gator;
 ```
 
-#### Initialize the database
+## Initialize the database
 ```sh
 npx drizzle-kit migrate
 ```
 
-#### Run the program
+## Run the program
 
 ```sh
 ./gator <command> <args>
